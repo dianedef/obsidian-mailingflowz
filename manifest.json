@@ -1,0 +1,13 @@
+{
+	"id": "obsidian-mailingflowz",
+	"name": "MailingFlowz",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Intégration avec MailingFlowz pour l'envoi de newsletters depuis Obsidian",
+	"author": "Votre Nom",
+	"authorUrl": "https://votre-site.com",
+	"isDesktopOnly": false,
+	"js": "main.js",
+	"dependencies": {
+	}
+}

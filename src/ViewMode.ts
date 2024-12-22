@@ -1,7 +1,7 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { TViewMode } from './types';
 import { Settings } from './settings';
-import { MailingFlowzView, MAILINGFLOWZ_VIEW_TYPE } from './MailingFlowzView';
+import { TestWhisperView, TEST_WHISPER_VIEW_TYPE } from './MailingFlowzView';
 
 export class ViewMode {
     private currentView: MailingFlowzView | null = null;
@@ -19,9 +19,9 @@ export class ViewMode {
 
     private async closeCurrentView() {
         if (this.currentView) {
-            const leaves = this.plugin.app.workspace.getLeavesOfType(MAILINGFLOWZ_VIEW_TYPE);
+            const leaves = this.plugin.app.workspace.getLeavesOfType(TEST_WHISPER_VIEW_TYPE);
             leaves.forEach(leaf => {
-                if (leaf.view instanceof MailingFlowzView) {
+                if (leaf.view instanceof TestWhisperView) {
                     leaf.detach();
                 }
             });
@@ -34,9 +34,9 @@ export class ViewMode {
     private getLeafForMode(mode: TViewMode): WorkspaceLeaf {
         const workspace = this.plugin.app.workspace;
         
-        const existingLeaves = workspace.getLeavesOfType(MAILINGFLOWZ_VIEW_TYPE);
+        const existingLeaves = workspace.getLeavesOfType(TEST_WHISPER_VIEW_TYPE);
         existingLeaves.forEach(leaf => {
-            if (leaf.view instanceof MailingFlowzView) {
+            if (leaf.view instanceof TestWhisperView) {
                 leaf.detach();
             }
         });
@@ -68,7 +68,7 @@ export class ViewMode {
 
         const leaf = this.getLeafForMode(mode);
         await leaf.setViewState({
-            type: MAILINGFLOWZ_VIEW_TYPE,
+            type: TEST_WHISPER_VIEW_TYPE,
             active: true,
             state: { 
                 mode: mode,
@@ -77,7 +77,7 @@ export class ViewMode {
         });
 
         this.currentMode = mode;
-        this.currentView = leaf.view as MailingFlowzView;
+        this.currentView = leaf.view as TestWhisperView;
         this.activeLeaf = leaf;
         this.plugin.app.workspace.revealLeaf(leaf);
     }

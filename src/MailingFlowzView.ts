@@ -1,29 +1,29 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { MailingFlowzState } from './types';
 
-export const MAILINGFLOWZ_VIEW_TYPE = 'mailingflowz-view';
+export const TEST_WHISPER_VIEW_TYPE = 'test-whisper-view';
 
-export class MailingFlowzView extends ItemView {
+export class TestWhisperView extends ItemView {
     constructor(leaf: WorkspaceLeaf) {
         super(leaf);
     }
 
     getViewType(): string {
-        return MAILINGFLOWZ_VIEW_TYPE;
+        return TEST_WHISPER_VIEW_TYPE;
     }
 
     getDisplayText(): string {
-        return 'MailingFlowz';
+        return 'Test Whisper';
     }
 
     async onOpen() {
         const container = this.containerEl.children[1];
         container.empty();
-        container.createEl('h4', { text: 'MailingFlowz Newsletter' });
+        container.createEl('h4', { text: 'Test Whisper' });
         // Ici nous ajouterons plus tard l'interface de création de newsletter
     }
 
-    async setState(state: MailingFlowzState, result: any) {
+    async setState(state: TestWhisperState, result: any) {
         await super.setState(state, result);
         // Gérer l'état de la vue
     }

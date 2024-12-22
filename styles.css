@@ -1,0 +1,51 @@
+.progress-bar-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    background: var(--background-secondary);
+    border-radius: 10px;
+    z-index: 1000;
+}
+
+.progress-wrapper {
+    position: relative;
+    width: 300px;
+    height: 20px;
+    background: var(--background-primary);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0;
+    background: var(--interactive-accent);
+    transition: width 0.2s ease;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-normal);
+    font-size: 12px;
+}
+
+.progress-cancel-button {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.progress-cancel-button:hover {
+    background: var(--background-modifier-error-hover);
+} 

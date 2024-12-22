@@ -1,0 +1,37 @@
+{
+  "enableAutoUpdate": true,
+  "notesFolder": "pluginNotes",
+  "plugins": [
+    {
+      "title": "Cointelegraph.com News",
+      "url": "https://plugin",
+      "tags": ["Productivity", "Writing", "Blogging"],
+      "status": ["exploring"],
+      "activate": true,
+      "description": "Plugin pour lire les articles de Cointelegraph",
+      "transcribe": false,
+      "group": ["Outils", "Base"],
+      "rating": 5,
+      "urgency": 1,
+      "importance": 1,
+      "mdNote": "cointelegraph.md"
+    },
+  ],
+  "groups": [
+    "Tech",
+    "Outils",
+    "Base"
+  ],
+  "openaiKey": "",
+  "rssFolder": "RSS",
+  "fetchFrequency": "startup",
+  "fetchInterval": 3600,
+  "maxArticles": 1,
+  "retentionDays": 30,
+  "lastFetch": 1732450970194,
+  "readingMode": true,
+  "lastReadArticle": null,
+  "currentFeed": null,
+  "currentFolder": null,
+  "articleStates": {}
+}

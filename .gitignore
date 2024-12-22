@@ -2,6 +2,7 @@
 dist/
 build/
 node_modules/
+main.js
 
 # Fichiers de couverture de tests
 coverage/
@@ -36,5 +37,7 @@ Thumbs.db
 .cache/
 
 # Fichiers de build Obsidian
-main.js
 data.json
+main.js
+main.js.map
+style.css

@@ -1,12 +1,15 @@
 import { Plugin, Menu } from 'obsidian';
 import { ViewPlugin, ViewUpdate, DecorationSet } from '@codemirror/view';
+import { createApp } from 'vue';
 import { ViewMode } from './ViewMode';
 import { TViewMode } from './types';
 import { registerStyles } from './RegisterStyles';
-import { Settings, MailingFlowzSettingTab, DEFAULT_SETTINGS } from './settings';
-import { MailingFlowzView, MAILINGFLOWZ_VIEW_TYPE } from './MailingFlowzView';
+import { Settings, TestWhisperSettingTab, DEFAULT_SETTINGS } from './settings';
+import { TestWhisperView, TEST_WHISPER_VIEW_TYPE } from './MailingFlowzView';
 import { Translations } from './Translations';
 import { Hotkeys } from './Hotkeys';
+import Dashboard from './components/Dashboard.vue';
+import { setApp } from './ytdl';
 
 interface DecorationState {
     decorations: DecorationSet;
@@ -20,19 +23,24 @@ export default class MailingFlowzPlugin extends Plugin {
     settings!: Settings;
     private translations: Translations = new Translations();
     private hotkeys!: Hotkeys;
+    private vueApp: any;
 
     async refresh() {
-        this.app.workspace.detachLeavesOfType(MAILINGFLOWZ_VIEW_TYPE);
+        if (this.vueApp) {
+            this.vueApp.unmount();
+        }
+        this.app.workspace.detachLeavesOfType(TEST_WHISPER_VIEW_TYPE);
         this.settings = await Settings.loadSettings();
         this.viewMode = new ViewMode(this);
         
         this.registerView(
-            MAILINGFLOWZ_VIEW_TYPE,
-            (leaf) => new MailingFlowzView(leaf)
+            TEST_WHISPER_VIEW_TYPE,
+            (leaf) => new TestWhisperView(leaf)
         );
     }
 
     async onload() {
+        setApp(this.app);
         await this.loadApp();
         Settings.initialize(this);
         const settings = await Settings.loadSettings();
@@ -44,7 +52,7 @@ export default class MailingFlowzPlugin extends Plugin {
         this.hotkeys = new Hotkeys(this, this.settings, this.translations);
         this.hotkeys.registerHotkeys();
 
-        this.addSettingTab(new MailingFlowzSettingTab(
+        this.addSettingTab(new TestWhisperSettingTab(
             this.app,
             this,
             settings,
@@ -53,12 +61,16 @@ export default class MailingFlowzPlugin extends Plugin {
         ));
 
         this.registerView(
-            MAILINGFLOWZ_VIEW_TYPE,
-            (leaf) => new MailingFlowzView(leaf)
+            TEST_WHISPER_VIEW_TYPE,
+            (leaf) => {
+                const view = new TestWhisperView(leaf);
+                this.mountVueApp(view);
+                return view;
+            }
         );
 
         // Création du menu
-        const ribbonIcon = this.addRibbonIcon('mail', 'MailingFlowz', () => {});
+        const ribbonIcon = this.addRibbonIcon('mail', 'Test Whisper', () => {});
 
         ribbonIcon.addEventListener('mouseenter', () => {
             const menu = new Menu();
@@ -122,7 +134,23 @@ export default class MailingFlowzPlugin extends Plugin {
         this.translations.setLanguage(locale);
     }
 
+    private mountVueApp(view: MailingFlowzView) {
+        const container = view.containerEl.children[1];
+        const vueContainer = container.createDiv({ cls: 'vue-container' });
+        
+        this.vueApp = createApp(Dashboard, {
+            plugin: this,
+            settings: this.settings,
+            translations: this.translations
+        });
+        
+        this.vueApp.mount(vueContainer);
+    }
+
     onunload() {
+        if (this.vueApp) {
+            this.vueApp.unmount();
+        }
         this.app.workspace.detachLeavesOfType(MAILINGFLOWZ_VIEW_TYPE);
     }
 }

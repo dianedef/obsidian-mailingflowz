@@ -1,13 +1,17 @@
 import { App, Plugin, PluginSettingTab, Setting, Menu, TFolder, Notice } from 'obsidian';
+<<<<<<< HEAD
 import { DomainFolderMapping } from './types';
 import { Translations } from './Translations';
 import { ViewMode } from './ViewMode';
+=======
+import { testYtdl, downloadVideo } from './ytdl';
+>>>>>>> d4f16a55177a16b17f571965d9669ea066967ee4
 
-export interface MailingFlowzSettings {
+export interface TestWhisperSettings {
     apiKey: string;
     apiEndpoint: string;
     provider: string;
-    emailsFolder: string;
+    downloadFolder: string;
     defaultSegmentId?: string;
     defaultFromName?: string;
     defaultFromEmail?: string;
@@ -15,11 +19,11 @@ export interface MailingFlowzSettings {
     domainFolderMappings: DomainFolderMapping[];
 }
 
-export const DEFAULT_SETTINGS: MailingFlowzSettings = {
+export const DEFAULT_SETTINGS: TestWhisperSettings = {
     apiKey: '',
     apiEndpoint: '',
     provider: 'emailit',
-    emailsFolder: '',
+    downloadFolder: 'downloads',
     defaultSegmentId: '',
     defaultFromName: '',
     defaultFromEmail: '',
@@ -29,31 +33,37 @@ export const DEFAULT_SETTINGS: MailingFlowzSettings = {
 
 export class Settings {
     private static plugin: Plugin;
-    private static settings: MailingFlowzSettings;
+    private static settings: TestWhisperSettings;
 
     static initialize(plugin: Plugin) {
         this.plugin = plugin;
     }
 
-    static async loadSettings(): Promise<MailingFlowzSettings> {
+    static async loadSettings(): Promise<TestWhisperSettings> {
         const savedData = await this.plugin.loadData();
         this.settings = Object.assign({}, DEFAULT_SETTINGS, savedData || {});
         return this.settings;
     }
 
-    static async saveSettings(settings: Partial<MailingFlowzSettings>) {
+    static async saveSettings(settings: Partial<TestWhisperSettings>) {
         this.settings = Object.assign(this.settings || DEFAULT_SETTINGS, settings);
         await this.plugin.saveData(this.settings);
     }
 }
 
-export class MailingFlowzSettingTab extends PluginSettingTab {
+export class TestWhisperSettingTab extends PluginSettingTab {
     plugin: Plugin;
+<<<<<<< HEAD
     settings: MailingFlowzSettings;
     translations: Translations;
     domains: string[];
 
     constructor(app: App, plugin: Plugin, settings: MailingFlowzSettings, viewMode: ViewMode, translations: Translations) {
+=======
+    settings: TestWhisperSettings;
+
+    constructor(app: App, plugin: Plugin, settings: TestWhisperSettings) {
+>>>>>>> d4f16a55177a16b17f571965d9669ea066967ee4
         super(app, plugin);
         this.plugin = plugin;
         this.settings = settings;
@@ -66,15 +76,53 @@ export class MailingFlowzSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
+        containerEl.createEl('h2', { text: 'Test YouTube Download' });
+
+        // Ajout d'un bouton de test
+        new Setting(containerEl)
+            .setName('Test YouTube Download')
+            .setDesc('Tester le téléchargement d\'une vidéo YouTube')
+            .addButton(button => button
+                .setButtonText('Tester')
+                .onClick(async () => {
+                    try {
+                        const result = await testYtdl();
+                        if (result) {
+                            new Notice('Test réussi ! Vérifiez la console pour plus de détails');
+                        } else {
+                            new Notice('Échec du test. Vérifiez la console pour les erreurs');
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors du test:', error);
+                        new Notice('Erreur lors du test. Vérifiez la console');
+                    }
+                }));
+
+        // Ajout d'un bouton de téléchargement
+        new Setting(containerEl)
+            .setName('Tester le téléchargement')
+            .setDesc('Télécharger une vidéo YouTube')
+            .addButton(button => button
+                .setButtonText('Télécharger')
+                .onClick(async () => {
+                    try {
+                        const filePath = await downloadVideo('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+                        new Notice(`Vidéo téléchargée : ${filePath}`);
+                    } catch (error) {
+                        console.error('Erreur lors du téléchargement:', error);
+                        new Notice('Erreur lors du téléchargement');
+                    }
+                }));
+
         containerEl.createEl('h2', { text: 'Configuration MailingFlowz' });
 
         new Setting(containerEl)
-            .setName('Dossier des emails')
-            .setDesc('Choisissez le dossier où seront stockés vos emails')
+            .setName('Dossier de téléchargement')
+            .setDesc('Choisissez le dossier où seront stockées les vidéos')
             .addText(text => {
                 text.inputEl.style.width = '200px';
                 return text
-                    .setValue(this.settings.emailsFolder || 'Aucun dossier sélectionné')
+                    .setValue(this.settings.downloadFolder || 'Aucun dossier sélectionné')
                     .setDisabled(true);
             })
             .addButton(button => {
@@ -326,8 +374,8 @@ export class MailingFlowzSettingTab extends PluginSettingTab {
 
                     // Ajouter le gestionnaire de clic pour sélectionner ce dossier
                     item.onClick(async () => {
-                        this.settings.emailsFolder = subFolder.path;
-                        await Settings.saveSettings({ emailsFolder: subFolder.path });
+                        this.settings.downloadFolder = subFolder.path;
+                        await Settings.saveSettings({ downloadFolder: subFolder.path });
                         this.display();
                     });
                 });
@@ -337,8 +385,8 @@ export class MailingFlowzSettingTab extends PluginSettingTab {
                     item.setTitle(subFolder.name)
                         .setIcon('folder')
                         .onClick(async () => {
-                            this.settings.emailsFolder = subFolder.path;
-                            await Settings.saveSettings({ emailsFolder: subFolder.path });
+                            this.settings.downloadFolder = subFolder.path;
+                            await Settings.saveSettings({ downloadFolder: subFolder.path });
                             this.display();
                         });
                 });

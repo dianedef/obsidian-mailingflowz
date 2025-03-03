@@ -1,13 +1,19 @@
 {
-	"id": "obsidian-mailingflowz",
-	"name": "MailingFlowz",
+	"id": "test-whisper",
+	"name": "Test Whisper",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Intégration avec MailingFlowz pour l'envoi de newsletters depuis Obsidian",
+	"description": "Test Whisper Plugin",
 	"author": "Votre Nom",
 	"authorUrl": "https://votre-site.com",
-	"isDesktopOnly": false,
+	"isDesktopOnly": true,
 	"js": "main.js",
 	"dependencies": {
+	},
+	"permissions": {
+		"sys": {
+			"exec": true,
+			"fileSystem": true
+		}
 	}
 }

@@ -1,4 +1,7 @@
-import { App, Plugin, PluginSettingTab, Setting, Menu, TFolder } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, Menu, TFolder, Notice } from 'obsidian';
+import { DomainFolderMapping } from './types';
+import { Translations } from './Translations';
+import { ViewMode } from './ViewMode';
 
 export interface MailingFlowzSettings {
     apiKey: string;
@@ -9,6 +12,7 @@ export interface MailingFlowzSettings {
     defaultFromName?: string;
     defaultFromEmail?: string;
     defaultReplyTo?: string;
+    domainFolderMappings: DomainFolderMapping[];
 }
 
 export const DEFAULT_SETTINGS: MailingFlowzSettings = {
@@ -19,7 +23,8 @@ export const DEFAULT_SETTINGS: MailingFlowzSettings = {
     defaultSegmentId: '',
     defaultFromName: '',
     defaultFromEmail: '',
-    defaultReplyTo: ''
+    defaultReplyTo: '',
+    domainFolderMappings: []
 };
 
 export class Settings {
@@ -45,11 +50,16 @@ export class Settings {
 export class MailingFlowzSettingTab extends PluginSettingTab {
     plugin: Plugin;
     settings: MailingFlowzSettings;
+    translations: Translations;
+    domains: string[];
 
-    constructor(app: App, plugin: Plugin, settings: MailingFlowzSettings) {
+    constructor(app: App, plugin: Plugin, settings: MailingFlowzSettings, viewMode: ViewMode, translations: Translations) {
         super(app, plugin);
         this.plugin = plugin;
         this.settings = settings;
+        this.translations = translations;
+        // Initialiser les domaines disponibles à partir de apiEndpoint
+        this.domains = [this.settings.apiEndpoint.replace('https://', '')].filter(Boolean);
     }
 
     display(): void {
@@ -109,22 +119,140 @@ export class MailingFlowzSettingTab extends PluginSettingTab {
                     await Settings.saveSettings({ apiKey: value });
                 }));
 
-        new Setting(containerEl)
-            .setName('Domaine d\'envoi')
-            .setDesc('Entrez le domaine que vous utilisez pour vos envois d\'emails (exemple: mail.mondomaine.com)')
-            .addText(text => text
-                .setPlaceholder('mail.mondomaine.com')
-                .setValue(this.settings.apiEndpoint)
-                .onChange(async (value) => {
-                    const fullUrl = value ? `https://${value}` : '';
-                    this.settings.apiEndpoint = fullUrl;
-                    await Settings.saveSettings({ apiEndpoint: fullUrl });
-                }));
-
         containerEl.createEl('p', {
             text: 'Vous pouvez trouver votre clé API dans les paramètres de votre compte.'
         });
-    }
+
+        new Setting(containerEl)
+            .setName('Domaine d\'envoi principal')
+            .setDesc('Entrez le domaine principal pour vos envois d\'emails (exemple: mail.mondomaine.com)')
+            .addText(text => text
+                .setPlaceholder('mail.mondomaine.com')
+                .setValue(this.settings.apiEndpoint.replace('https://', ''))
+                .onChange(async (value) => {
+                    const fullUrl = value ? `https://${value}` : '';
+                    this.settings.apiEndpoint = fullUrl;
+                    // Mise à jour des domaines disponibles
+                    this.domains = [value].filter(Boolean);
+                    await Settings.saveSettings({ apiEndpoint: fullUrl });
+                }));
+
+        // Section Mappages Domaine-Dossier
+        containerEl.createEl('h3', { text: 'Configuration des sous-domaines' });
+        
+        const descriptionLine = new Setting(containerEl)
+            .setName('Sous-domaines d\'envoi')
+            .setDesc('Associez chaque sous-domaine à un dossier spécifique pour organiser vos emails')
+            .addButton(button => button
+                .setIcon('plus')
+                .setButtonText('Ajouter un sous-domaine')
+                .setCta()
+                .onClick(async () => {
+                    if (!this.settings.emailsFolder) {
+                        new Notice('Veuillez d\'abord sélectionner un dossier principal');
+                        return;
+                    }
+                    if (!this.domains.length) {
+                        new Notice('Veuillez d\'abord configurer un domaine principal');
+                        return;
+                    }
+                    this.settings.domainFolderMappings.push({
+                        domain: this.domains[0],
+                        folder: ''
+                    });
+                    await Settings.saveSettings({ domainFolderMappings: this.settings.domainFolderMappings });
+                    this.display();
+                }));
+
+        descriptionLine.settingEl.addClass('description-with-button');
+
+        // Conteneur pour les mappages existants
+        const mappingsContainer = containerEl.createEl('div');
+        
+        // Fonction pour créer un nouveau mapping
+        const createMappingElement = (mapping: DomainFolderMapping, index: number) => {
+            const mappingDiv = mappingsContainer.createEl('div', { cls: 'mapping-container' });
+            
+            // Conteneur pour la ligne de mapping
+            const mappingLine = new Setting(mappingDiv)
+            .setClass('compact-setting')
+            // Label "Domaine"
+            .addText(text => {
+                text.inputEl.addClass('label-text');
+                text.setValue(this.translations.t('settings.domain'));
+                text.setDisabled(true);
+                return text;
+            })
+            // Dropdown des domaines
+            .addDropdown(dropdown => {
+                this.domains.forEach(domain => {
+                    dropdown.addOption(domain, domain);
+                });
+                dropdown.setValue(mapping.domain);
+                dropdown.onChange(value => {
+                    this.settings.domainFolderMappings[index].domain = value;
+                });
+                dropdown.selectEl.addClass('domain-dropdown');
+                return dropdown;
+            })
+            // Champ de saisie du dossier avec son label
+            .addButton(button => button
+                .setButtonText(mapping.folder || this.translations.t('settings.folder'))
+                .onClick((e: MouseEvent) => {
+                    // Créer le menu de sélection principal
+                    const menu = new Menu();
+                    
+                    // Construire la hiérarchie des dossiers à partir de la racine
+                    this.buildFolderMenu(menu, this.app.vault.getRoot(), index);
+
+                    // Afficher le menu à la position du clic
+                    menu.showAtMouseEvent(e);
+                }))
+            // Boutons d'action
+            .addButton(button => button
+                .setIcon('checkmark')
+                .setTooltip(this.translations.t('settings.save'))
+                .setCta()
+                .onClick(async () => {
+                    await Settings.saveSettings({ domainFolderMappings: this.settings.domainFolderMappings });
+                    new Notice(this.translations.t('notices.saved'));
+                }))
+            .addButton(button => button
+                .setIcon('trash')
+                .setTooltip(this.translations.t('settings.remove'))
+                .onClick(async () => {
+                    this.settings.domainFolderMappings.splice(index, 1);
+                    await Settings.saveSettings({ domainFolderMappings: this.settings.domainFolderMappings });
+                    new Notice(this.translations.t('notices.saved'));
+                    this.display();
+                }));
+
+            // Ajouter des styles pour aligner les éléments
+            mappingLine.settingEl.addClass('mapping-line');
+        };
+
+        // Afficher les mappages existants
+        this.settings.domainFolderMappings.forEach((mapping, index) => {
+            createMappingElement(mapping, index);
+        });
+
+        // Section Mode d'affichage
+        containerEl.createEl('h2', { text: this.translations.t('settings.viewMode') });
+
+        new Setting(containerEl)
+            .setName(this.translations.t('settings.defaultViewMode'))
+            .setDesc(this.translations.t('settings.defaultViewModeDesc'))
+            .addDropdown(dropdown => dropdown
+            .addOption('tab', this.translations.t('settings.tab'))
+            .addOption('sidebar', this.translations.t('settings.sidebar'))
+            .addOption('overlay', this.translations.t('settings.overlay'))
+            .setValue(this.settings.viewMode)
+            .onChange(async (value: 'tab' | 'sidebar' | 'overlay') => {
+                this.settings.viewMode = value;
+                await Settings.saveSettings({ viewMode: value });
+                new Notice(this.translations.t('notices.saved'));
+            }));
+       }
 
     // Construire le menu hiérarchique des dossiers
     private buildFolderMenu(menu: Menu, folder: TFolder, level: number = 0) {

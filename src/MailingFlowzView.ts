@@ -16,6 +16,10 @@ export class MailingFlowzView extends ItemView {
         return 'MailingFlowz';
     }
 
+    getIcon(): string {
+        return 'mail';
+    }
+
     async onOpen() {
         const container = this.containerEl.children[1];
         container.empty();
